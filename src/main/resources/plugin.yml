@@ -1,3 +1,6 @@
 name: ${project.build.finalName}
 main: me.lightlord323dev.cursedvaults.Main
 version: ${project.version}
+commands:
+  cursedvault:
+    aliases: ['cv']

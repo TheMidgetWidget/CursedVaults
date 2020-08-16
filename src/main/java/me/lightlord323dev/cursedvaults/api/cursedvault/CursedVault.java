@@ -1,11 +1,14 @@
 package me.lightlord323dev.cursedvaults.api.cursedvault;
 
+import me.lightlord323dev.cursedvaults.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +24,7 @@ public class CursedVault {
     private float speed;
     private List<ItemStack> items;
     private ArmorStand display;
+    private CursedVaultMoveTask task;
 
     public CursedVault(UUID owner, int size, int pickupRadius, float speed, Location spawnLocation) {
         this.owner = owner;
@@ -29,6 +33,8 @@ public class CursedVault {
         this.speed = speed;
         this.items = new ArrayList<>();
         spawnDisplay(spawnLocation);
+        this.task = new CursedVaultMoveTask(owner, this.display);
+        this.task.runTaskTimer(Main.getInstance(), 0, 2);
     }
 
     public CursedVault(UUID owner, int size, int pickupRadius, float speed, List<ItemStack> items, Location spawnLocation) {
@@ -38,6 +44,8 @@ public class CursedVault {
         this.speed = speed;
         this.items = items;
         spawnDisplay(spawnLocation);
+        this.task = new CursedVaultMoveTask(owner, this.display);
+        this.task.runTaskTimer(Main.getInstance(), 0, 2);
     }
 
     public void tryToPickup() {
@@ -72,9 +80,15 @@ public class CursedVault {
     }
 
     private void spawnDisplay(Location location) {
-        display = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
+        display = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
+        display.setCustomName(Bukkit.getPlayer(owner).getName() + "'s Cursed Vault");
+        display.setCustomNameVisible(true);
         display.getEquipment().setHelmet(new ItemStack(Material.CHEST));
-        // have to play around with rotations to achieve wanted effect
+        display.setVisible(false);
+        display.setCanPickupItems(false);
+        display.setGravity(false);
+
+        display.setMetadata("cursedVault", new FixedMetadataValue(Main.getInstance(), owner.toString()));
     }
 
     public UUID getOwner() {
