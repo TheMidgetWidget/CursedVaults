@@ -1,13 +1,17 @@
 package me.lightlord323dev.cursedvaults.handler;
 
-import me.lightlord323dev.cursedvaults.Main;
+import me.lightlord323dev.cursedvaults.api.gui.optionmenu.GUIOptionMenu;
+import me.lightlord323dev.cursedvaults.api.gui.optionmenu.OptionItem;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -20,7 +24,7 @@ public class CursedVaultInteractHandler implements Handler, Listener {
         if (e.getRightClicked() instanceof ArmorStand && e.getRightClicked().hasMetadata("cursedVault")) {
             e.setCancelled(true);
             UUID owner = UUID.fromString(e.getRightClicked().getMetadata("cursedVault").get(0).asString());
-            Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(owner).tryToPickup();
+            e.getPlayer().openInventory(new GUIOptionMenu(ChatColor.RED + "TEST", 54, Arrays.asList(new OptionItem(Material.NAME_TAG, ChatColor.GREEN + "CLICK ME", ChatColor.GRAY + "Clicker", 25))).getInventory());
         }
     }
 

@@ -1,70 +1,97 @@
 package me.lightlord323dev.cursedvaults.api.cursedvault;
 
+import me.lightlord323dev.cursedvaults.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.UUID;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Luda on 8/16/2020.
  */
-public class CursedVaultMoveTask extends BukkitRunnable {
+public class CursedVaultMoveTask {
 
-    private UUID owner;
-    private ArmorStand armorStand;
+    private CursedVault cursedVault;
+    private int counter;
 
-    public CursedVaultMoveTask(UUID owner, ArmorStand armorStand) {
-        this.owner = owner;
-        this.armorStand = armorStand;
-    }
+    private static final List<Material> PROBLEMATIC = Arrays.asList(
+            Material.AIR,
+            Material.SNOW,
+            Material.CARPET,
+            Material.BROWN_MUSHROOM,
+            Material.RED_MUSHROOM,
+            Material.LONG_GRASS,
+            Material.YELLOW_FLOWER,
+            Material.RED_ROSE
+    );
 
-    @Override
-    public void run() {
-        Player player = Bukkit.getPlayer(owner);
-        if (armorStand.getLocation().distanceSquared(player.getLocation()) >= 100) {
-            Location blockLoc = player.getLocation().clone().add(0, -1, 0);
-            if (blockLoc.getBlock().getType() != Material.AIR)
-                armorStand.teleport(blockLoc);
-        } else {
-            Location playerLoc = player.getLocation().clone(), targetLoc;
-            if (armorStand.getLocation().getBlockX() == playerLoc.getBlockX() && armorStand.getLocation().getBlockZ() == playerLoc.getBlockZ()) {
-                return;
-            } else {
-                targetLoc = armorStand.getLocation().clone().add(playerLoc.toVector().subtract(armorStand.getLocation().toVector()).normalize());
-                if (targetLoc.distanceSquared(playerLoc) <= 9)
-                    return;
-            }
+    public CursedVaultMoveTask(CursedVault cursedVault) {
+        this.cursedVault = cursedVault;
+        this.counter = 0;
 
-            // making vault look in the same dir
-            targetLoc.setDirection(playerLoc.subtract(targetLoc).toVector());
-
-            for (int i = -3; i < 3; i++) {
-                Location tempLoc = targetLoc.clone().add(0, i, 0);
-                if (isValidBottomBlock(tempLoc) && isValidTopBlock(tempLoc.clone().add(0, 1, 0))) {
-                    targetLoc = tempLoc;
+        Main.getInstance().getExecutorService().scheduleAtFixedRate(() -> {
+            Player player = Bukkit.getPlayer(cursedVault.getOwner());
+            if (cursedVault.getDisplay().getLocation().distanceSquared(player.getLocation()) >= 1000) {
+                Location blockLoc = player.getLocation().clone().add(0, -1, 0);
+                if (blockLoc.getBlock().getType() != Material.AIR) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
+                        cursedVault.getDisplay().teleport(blockLoc);
+                    });
                 }
+            } else {
+                Location playerLoc = player.getLocation().clone(), targetLoc;
+                if (cursedVault.getDisplay().getLocation().getBlockX() == playerLoc.getBlockX() && cursedVault.getDisplay().getLocation().getBlockZ() == playerLoc.getBlockZ()) {
+                    return;
+                } else {
+                    targetLoc = cursedVault.getDisplay().getLocation().clone().add(playerLoc.toVector().subtract(cursedVault.getDisplay().getLocation().toVector()).normalize().multiply(0.2));
+                    if (targetLoc.distanceSquared(playerLoc) <= 4)
+                        return;
+                }
+
+                // making vault look in the same dir
+                targetLoc.setDirection(playerLoc.subtract(targetLoc).toVector());
+
+                Location targetClone = targetLoc.clone();
+
+                for (int i = -2; i < 2; i++) {
+                    if (isValidBottomBlock(targetClone.clone().add(0, i, 0)) && isValidTopBlock(targetClone.clone().add(0, i + 1, 0))) {
+                        targetLoc = targetClone.clone().add(0, i, 0);
+                    }
+                }
+
+                if (targetLoc.getBlock().getType() != Material.AIR) {
+                    targetLoc.setY(targetLoc.getBlockY());
+                    Location tempLoc = targetLoc;
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
+                        cursedVault.getDisplay().teleport(tempLoc);
+                    });
+                }
+                if (counter == 0) {
+                    cursedVault.tryToPickup();
+                    counter++;
+                } else if (counter > 0) {
+                    counter++;
+                    if (counter >= 25)
+                        counter = 0;
+                }
+
             }
+        }, 0, 10L, TimeUnit.MILLISECONDS);
 
-//            if (isValidTopBlock(targetLoc))
-//                targetLoc.subtract(0, 1, 0);
-
-            targetLoc.setY(targetLoc.getBlockY());
-
-            if (isValidBottomBlock(targetLoc))
-                armorStand.teleport(targetLoc);
-        }
     }
 
     private boolean isValidBottomBlock(Location location) {
-        return location.getBlock().getType() != Material.AIR && location.getBlock().getType() != Material.SNOW && location.getBlock().getType() != Material.CARPET && location.getBlock().getType() != Material.BROWN_MUSHROOM && location.getBlock().getType() != Material.RED_MUSHROOM && location.getBlock().getType() != Material.LONG_GRASS && location.getBlock().getType() != Material.YELLOW_FLOWER && location.getBlock().getType() != Material.RED_ROSE;
+        if (PROBLEMATIC.contains(location.getBlock().getType()) || location.getBlock().getType() == Material.WATER || location.getBlock().getType() == Material.LAVA)
+            return false;
+        return true;
     }
 
     private boolean isValidTopBlock(Location location) {
-        return location.getBlock().getType() == Material.AIR || location.getBlock().getType() == Material.SNOW || location.getBlock().getType() == Material.CARPET || location.getBlock().getType() == Material.BROWN_MUSHROOM || location.getBlock().getType() == Material.RED_MUSHROOM || location.getBlock().getType() == Material.LONG_GRASS || location.getBlock().getType() == Material.YELLOW_FLOWER || location.getBlock().getType() == Material.RED_ROSE;
+        return PROBLEMATIC.contains(location.getBlock().getType());
     }
 
 }

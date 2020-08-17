@@ -33,8 +33,8 @@ public class CursedVault {
         this.speed = speed;
         this.items = new ArrayList<>();
         spawnDisplay(spawnLocation);
-        this.task = new CursedVaultMoveTask(owner, this.display);
-        this.task.runTaskTimer(Main.getInstance(), 0, 2);
+        this.task = new CursedVaultMoveTask(this);
+//        this.task.runTaskTimer(Main.getInstance(), 0, 2);
     }
 
     public CursedVault(UUID owner, int size, int pickupRadius, float speed, List<ItemStack> items, Location spawnLocation) {
@@ -44,8 +44,8 @@ public class CursedVault {
         this.speed = speed;
         this.items = items;
         spawnDisplay(spawnLocation);
-        this.task = new CursedVaultMoveTask(owner, this.display);
-        this.task.runTaskTimer(Main.getInstance(), 0, 2);
+        this.task = new CursedVaultMoveTask(this);
+//        this.task.runTaskTimer(Main.getInstance(), 0, 2);
     }
 
     public void tryToPickup() {
@@ -57,15 +57,15 @@ public class CursedVault {
                 storedItem.setAmount(storedItem.getAmount() + itemToPickup.getAmount() - excessAmount);
                 items.set(index, storedItem);
                 if (excessAmount == 0) {
-                    item.remove();
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> item.remove());
                 } else {
                     itemToPickup.setAmount(excessAmount);
-                    ((Item) item).setItemStack(itemToPickup);
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> ((Item) item).setItemStack(itemToPickup));
                 }
             } else {
                 if (items.size() < this.size) {
                     items.add(itemToPickup);
-                    item.remove();
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> item.remove());
                 }
             }
         });
@@ -79,7 +79,12 @@ public class CursedVault {
             return items.size() < this.size;
     }
 
+    public void move(Location location) {
+        this.display.teleport(location);
+    }
+
     private void spawnDisplay(Location location) {
+        // ARMORSTAND
         display = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
         display.setCustomName(Bukkit.getPlayer(owner).getName() + "'s Cursed Vault");
         display.setCustomNameVisible(true);
@@ -121,5 +126,9 @@ public class CursedVault {
 
     public List<ItemStack> getItems() {
         return items;
+    }
+
+    public ArmorStand getDisplay() {
+        return display;
     }
 }
