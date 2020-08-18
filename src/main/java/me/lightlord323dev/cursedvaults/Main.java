@@ -1,7 +1,7 @@
 package me.lightlord323dev.cursedvaults;
 
 import me.lightlord323dev.cursedvaults.api.handler.HandlerRegistery;
-import me.lightlord323dev.cursedvaults.command.CommandSpawnVault;
+import me.lightlord323dev.cursedvaults.command.CommandCursedVault;
 import me.lightlord323dev.cursedvaults.util.file.AbstractFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,7 +33,7 @@ public class Main extends JavaPlugin {
         initFiles();
 
         // registering commands
-        getCommand("cursedvault").setExecutor(new CommandSpawnVault());
+        getCommand("cursedvault").setExecutor(new CommandCursedVault());
 
         // loading handlers
         handlerRegistery = new HandlerRegistery();

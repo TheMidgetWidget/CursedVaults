@@ -2,6 +2,7 @@ package me.lightlord323dev.cursedvaults.handler;
 
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
+import me.lightlord323dev.cursedvaults.api.cursedvault.FilterMode;
 import me.lightlord323dev.cursedvaults.api.gui.itemmenu.GUIItemMenu;
 import me.lightlord323dev.cursedvaults.api.gui.optionmenu.GUIOptionMenu;
 import me.lightlord323dev.cursedvaults.api.gui.optionmenu.OptionItem;
@@ -101,7 +102,8 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                             Inventory inventory = new GUIOptionMenu(ChatColor.BLUE + "Vault options", 54, Arrays.asList(
                                     new OptionItem(Material.CHEST, ChatColor.GREEN + "Pickup vault", ChatColor.GRAY + "Click to pickup your vault", 20, "vaultPickup"),
                                     new OptionItem(Material.BARRIER, ChatColor.BLUE + "Toggle vault auto-pickup", ChatColor.GRAY + autoPickupLore, 22, "vaultToggle"),
-                                    new OptionItem(Material.CAULDRON_ITEM, ChatColor.RED + "Halt", haltLore, 24, "vaultHalt")
+                                    new OptionItem(Material.CAULDRON_ITEM, ChatColor.RED + "Halt", haltLore, 24, "vaultHalt"),
+                                    new OptionItem(Material.CAULDRON_ITEM, ChatColor.DARK_PURPLE + "Filter mode", ChatColor.GRAY + "Current filter mode: " + ChatColor.GOLD + cursedVault.getFilterMode().toString(), 28, "vaultFilter")
                             )).getInventory();
                             e.getWhoClicked().openInventory(inventory);
                             break;
@@ -136,6 +138,20 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                             else
                                 haltLore = haltLore + ChatColor.RED + "halted";
                             e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(haltLore).build());
+                            break;
+                        case "vaultFilter":
+                            switch (cursedVault.getFilterMode()) {
+                                case NONE:
+                                    cursedVault.setFilterMode(FilterMode.BLACKLIST);
+                                    break;
+                                case BLACKLIST:
+                                    cursedVault.setFilterMode(FilterMode.WHITELIST);
+                                    break;
+                                case WHITELIST:
+                                    cursedVault.setFilterMode(FilterMode.NONE);
+                                    break;
+                            }
+                            e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Current filter mode: " + ChatColor.GOLD + cursedVault.getFilterMode().toString()).build());
                             break;
                         // UPGRADES MENU
                         case "cvSizeUp":

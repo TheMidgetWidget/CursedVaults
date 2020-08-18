@@ -4,12 +4,16 @@ import com.google.gson.reflect.TypeToken;
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.util.ItemBuilder;
+import me.lightlord323dev.cursedvaults.util.NBTApi;
 import me.lightlord323dev.cursedvaults.util.file.AbstractFile;
 import me.lightlord323dev.cursedvaults.util.file.GsonUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,6 +139,13 @@ public class CursedVaultHandler implements Handler {
 
     public CursedVault getCursedVault(UUID uuid) {
         return cursedVaults.stream().filter(cursedVault -> cursedVault.getUniqueId().toString().equalsIgnoreCase(uuid.toString())).findAny().orElse(null);
+    }
+
+    public ItemStack createVaultItem(Player owner) {
+        CursedVault cursedVault = new CursedVault(owner.getUniqueId(), 7, 1, 1f);
+        ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
+        Main.getInstance().getExecutorService().schedule(() -> saveCursedVaultData(cursedVault), 0, TimeUnit.MILLISECONDS);
+        return vaultItem;
     }
 
     public void saveAndUnregisterVault(CursedVault cursedVault) {

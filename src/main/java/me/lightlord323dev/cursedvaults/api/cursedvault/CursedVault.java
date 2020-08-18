@@ -28,13 +28,15 @@ public class CursedVault {
     private int size, pickupRadius;
     private float speed;
     private transient List<ItemStack> items;
+    private List<Material> filter;
+    private FilterMode filterMode;
     private List<String> serializedItems;
     private String lastSeenLocation;
     private transient ArmorStand display;
     private int counter; // pick up delay
     private boolean canPickUp, canMove;
 
-    public CursedVault(UUID owner, int size, int pickupRadius, float speed, Location spawnLocation) {
+    public CursedVault(UUID owner, int size, int pickupRadius, float speed) {
         this.uniqueId = UUID.randomUUID();
         this.owner = owner;
         this.displayName = Bukkit.getPlayer(owner).getName() + "'s Cursed Vault";
@@ -42,25 +44,11 @@ public class CursedVault {
         this.pickupRadius = pickupRadius;
         this.speed = speed;
         this.items = new ArrayList<>();
+        this.filter = new ArrayList<>();
+        this.filterMode = FilterMode.NONE;
         for (int i = 0; i < size; i++)
             items.add(new ItemStack(Material.AIR));
         this.counter = 0;
-        spawnDisplay(spawnLocation);
-        this.canPickUp = true;
-        this.canMove = true;
-    }
-
-    public CursedVault(UUID owner, int size, int pickupRadius, float speed, List<ItemStack> items, Location spawnLocation) {
-        this.uniqueId = UUID.randomUUID();
-        this.owner = owner;
-        this.size = size;
-        this.pickupRadius = pickupRadius;
-        this.speed = speed;
-        this.items = items;
-        for (int i = 0; i < size; i++)
-            items.add(new ItemStack(Material.AIR));
-        this.counter = 0;
-        spawnDisplay(spawnLocation);
         this.canPickUp = true;
         this.canMove = true;
     }
@@ -81,6 +69,8 @@ public class CursedVault {
             return;
         display.getLocation().getWorld().getNearbyEntities(display.getLocation(), pickupRadius, pickupRadius, pickupRadius).stream().filter(entity -> entity instanceof Item).forEach(item -> {
             ItemStack itemToPickup = ((Item) item).getItemStack();
+            if (!canPickupItem(itemToPickup))
+                return;
             ItemStack storedItem = this.items.stream().filter(itemStack -> itemStack != null && itemStack.isSimilar(itemToPickup)).findAny().orElse(null);
             if (storedItem != null && storedItem.getAmount() < storedItem.getMaxStackSize()) {
                 int index = items.indexOf(storedItem), amountToFill = storedItem.getMaxStackSize() - storedItem.getAmount(), excessAmount = itemToPickup.getAmount() >= amountToFill ? itemToPickup.getAmount() - amountToFill : 0;
@@ -105,8 +95,20 @@ public class CursedVault {
         });
     }
 
+    private boolean canPickupItem(ItemStack itemStack) {
+        switch (this.filterMode) {
+            case NONE:
+                return true;
+            case BLACKLIST:
+                return !this.filter.contains(itemStack.getType());
+            case WHITELIST:
+                return this.filter.contains(itemStack.getType());
+            default:
+                return true;
+        }
+    }
+
     public void spawnDisplay(Location location) {
-        // ARMORSTAND
         display = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
         display.setCustomName(ChatColor.translateAlternateColorCodes('&', this.displayName));
         display.setCustomNameVisible(true);
@@ -216,5 +218,29 @@ public class CursedVault {
 
     public void setLastSeenLocation(String lastSeenLocation) {
         this.lastSeenLocation = lastSeenLocation;
+    }
+
+    public List<Material> getFilterList() {
+        return filter;
+    }
+
+    public void setFilterList(List<Material> filter) {
+        this.filter = filter;
+    }
+
+    public void addFilterItem(Material material) {
+        this.filter.add(material);
+    }
+
+    public void removeFilterItem(Material material) {
+        this.filter.remove(material);
+    }
+
+    public FilterMode getFilterMode() {
+        return filterMode;
+    }
+
+    public void setFilterMode(FilterMode filterMode) {
+        this.filterMode = filterMode;
     }
 }
