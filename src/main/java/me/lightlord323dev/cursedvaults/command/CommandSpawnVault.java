@@ -27,7 +27,7 @@ public class CommandSpawnVault implements CommandExecutor {
                 player.sendMessage(ChatColor.RED + "You already have a vault spawned in.");
                 return true;
             } else {
-                cursedVault = new CursedVault(player.getUniqueId(), 9, 3, 1.0f, player.getLocation());
+                cursedVault = new CursedVault(player.getUniqueId(), 7, 3, 1.0f, player.getLocation());
                 Main.getInstance().getHandlerRegistery().getCursedVaultHandler().registerCursedVault(cursedVault);
             }
         }

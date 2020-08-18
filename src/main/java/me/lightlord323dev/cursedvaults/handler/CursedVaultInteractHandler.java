@@ -1,17 +1,24 @@
 package me.lightlord323dev.cursedvaults.handler;
 
-import me.lightlord323dev.cursedvaults.api.gui.optionmenu.GUIOptionMenu;
+import me.lightlord323dev.cursedvaults.Main;
+import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
+import me.lightlord323dev.cursedvaults.api.gui.itemmenu.GUIItemMenu;
 import me.lightlord323dev.cursedvaults.api.gui.optionmenu.OptionItem;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.util.NBTApi;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -20,11 +27,36 @@ import java.util.UUID;
 public class CursedVaultInteractHandler implements Handler, Listener {
 
     @EventHandler
+    public void onPlace(BlockPlaceEvent e) {
+        if (e.getItemInHand().getType() == Material.CHEST) {
+            NBTApi nbtApi = new NBTApi(e.getItemInHand());
+            if (nbtApi.hasKey("vaultUUID")) {
+                // TODO find vault file and load data into memory
+                e.setCancelled(true);
+                CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(e.getPlayer());
+                if (cursedVault != null) {
+                    e.getPlayer().sendMessage(ChatColor.RED + "You already have a vault spawned in.");
+                } else {
+                    e.getPlayer().setItemInHand(new ItemStack(Material.AIR));
+                    cursedVault = new CursedVault(e.getPlayer().getUniqueId(), 7, 3, 1.0f, e.getBlock().getLocation());
+                    Main.getInstance().getHandlerRegistery().getCursedVaultHandler().registerCursedVault(cursedVault);
+                }
+            }
+        }
+    }
+
+    @EventHandler
     public void onInteract(PlayerInteractAtEntityEvent e) {
         if (e.getRightClicked() instanceof ArmorStand && e.getRightClicked().hasMetadata("cursedVault")) {
             e.setCancelled(true);
             UUID owner = UUID.fromString(e.getRightClicked().getMetadata("cursedVault").get(0).asString());
-            e.getPlayer().openInventory(new GUIOptionMenu(ChatColor.RED + "TEST", 54, Arrays.asList(new OptionItem(Material.NAME_TAG, ChatColor.GREEN + "CLICK ME", ChatColor.GRAY + "Clicker", 25))).getInventory());
+            if (owner.toString().equalsIgnoreCase(e.getPlayer().getUniqueId().toString())) {
+                CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(Bukkit.getPlayer(owner));
+                e.getPlayer().setMetadata("cvInv", new FixedMetadataValue(Main.getInstance(), 1));
+                Inventory inventory = new GUIItemMenu(cursedVault.getUniqueId(), ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName()), 54, cursedVault.getSize(), 1, cursedVault.getItems()).getInventory();
+                inventory.setItem(4, new OptionItem(Material.CHEST, ChatColor.GOLD + "Options", ChatColor.GRAY + "Click to view vault options", 0, "menu").getItemStack());
+                e.getPlayer().openInventory(inventory);
+            }
         }
     }
 
