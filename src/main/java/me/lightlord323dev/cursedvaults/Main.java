@@ -2,6 +2,7 @@ package me.lightlord323dev.cursedvaults;
 
 import me.lightlord323dev.cursedvaults.api.handler.HandlerRegistery;
 import me.lightlord323dev.cursedvaults.command.CommandSpawnVault;
+import me.lightlord323dev.cursedvaults.util.file.AbstractFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.concurrent.Executors;
@@ -19,11 +20,17 @@ public class Main extends JavaPlugin {
 
     private ScheduledExecutorService executorService;
 
+    // files
+    private AbstractFile userData;
+
     @Override
     public void onEnable() {
         instance = this;
 
         this.executorService = Executors.newScheduledThreadPool(4);
+
+        //initializing files
+        initFiles();
 
         // registering commands
         getCommand("cursedvault").setExecutor(new CommandSpawnVault());
@@ -38,6 +45,10 @@ public class Main extends JavaPlugin {
         handlerRegistery.unloadHandlers();
     }
 
+    private void initFiles() {
+        userData = new AbstractFile(this, "userdata.json", false);
+    }
+
     public static Main getInstance() {
         return instance;
     }
@@ -48,5 +59,9 @@ public class Main extends JavaPlugin {
 
     public ScheduledExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public AbstractFile getUserData() {
+        return userData;
     }
 }

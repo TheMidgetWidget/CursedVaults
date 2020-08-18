@@ -1,6 +1,8 @@
 package me.lightlord323dev.cursedvaults.api.cursedvault;
 
 import me.lightlord323dev.cursedvaults.Main;
+import me.lightlord323dev.cursedvaults.util.ItemSerializer;
+import me.lightlord323dev.cursedvaults.util.LocationUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -25,8 +27,10 @@ public class CursedVault {
     private String displayName;
     private int size, pickupRadius;
     private float speed;
-    private List<ItemStack> items;
-    private ArmorStand display;
+    private transient List<ItemStack> items;
+    private List<String> serializedItems;
+    private String lastSeenLocation;
+    private transient ArmorStand display;
     private int counter; // pick up delay
     private boolean canPickUp, canMove;
 
@@ -61,6 +65,17 @@ public class CursedVault {
         this.canMove = true;
     }
 
+    public CursedVault serialize() {
+        this.serializedItems = new ArrayList<>();
+        this.items.forEach(itemStack -> serializedItems.add(ItemSerializer.itemStackToBase64(itemStack)));
+        return this;
+    }
+
+    public void load() {
+        this.items = new ArrayList<>();
+        this.serializedItems.forEach(item -> items.add(ItemSerializer.itemStackFromBase64(item)));
+    }
+
     public void tryToPickup() {
         if (!canPickUp)
             return;
@@ -90,7 +105,7 @@ public class CursedVault {
         });
     }
 
-    private void spawnDisplay(Location location) {
+    public void spawnDisplay(Location location) {
         // ARMORSTAND
         display = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
         display.setCustomName(ChatColor.translateAlternateColorCodes('&', this.displayName));
@@ -193,5 +208,13 @@ public class CursedVault {
 
     public void setCanMove(boolean canMove) {
         this.canMove = canMove;
+    }
+
+    public Location getLastSeenLocation() {
+        return LocationUtils.deserializeLocation(lastSeenLocation);
+    }
+
+    public void setLastSeenLocation(String lastSeenLocation) {
+        this.lastSeenLocation = lastSeenLocation;
     }
 }

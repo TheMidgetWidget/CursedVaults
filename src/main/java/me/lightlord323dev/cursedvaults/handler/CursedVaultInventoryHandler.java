@@ -114,9 +114,9 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                                 e.getWhoClicked().closeInventory();
                             } else {
                                 ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
-                                Main.getInstance().getHandlerRegistery().getCursedVaultHandler().unregisterCursedVault(cursedVault);
                                 e.getWhoClicked().closeInventory();
                                 e.getWhoClicked().getInventory().addItem(vaultItem);
+                                Main.getInstance().getHandlerRegistery().getCursedVaultHandler().saveAndUnregisterVault(cursedVault);
                             }
                             break;
                         case "vaultToggle":
@@ -192,20 +192,6 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                         vaultItems.set(actualIndex, items.get(i));
                     }
                 }
-
-//                int openSlots = cursedVault.getSize() - (startIndex);
-//                if (openSlots < 0)
-//                    openSlots = cursedVault.getSize();
-//                if (openSlots > 28)
-//                    openSlots = 28;
-//
-//                if (items.size() < openSlots) {
-//                    for (int i = 0; i < openSlots - items.size(); i++)
-//                        items.add(new ItemStack(Material.AIR));
-//                }
-//
-//                items.addAll(cursedVault.getItems().subList(startIndex + openSlots, cursedVault.getItems().size()));
-//                cursedVault.setItems(items);
 
                 e.getPlayer().removeMetadata("cvInv", Main.getInstance());
             }

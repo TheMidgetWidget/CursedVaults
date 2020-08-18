@@ -31,15 +31,13 @@ public class CursedVaultInteractHandler implements Handler, Listener {
         if (e.getItemInHand().getType() == Material.CHEST) {
             NBTApi nbtApi = new NBTApi(e.getItemInHand());
             if (nbtApi.hasKey("vaultUUID")) {
-                // TODO find vault file and load data into memory
                 e.setCancelled(true);
                 CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(e.getPlayer());
                 if (cursedVault != null) {
                     e.getPlayer().sendMessage(ChatColor.RED + "You already have a vault spawned in.");
                 } else {
                     e.getPlayer().setItemInHand(new ItemStack(Material.AIR));
-                    cursedVault = new CursedVault(e.getPlayer().getUniqueId(), 7, 3, 1.0f, e.getBlock().getLocation());
-                    Main.getInstance().getHandlerRegistery().getCursedVaultHandler().registerCursedVault(cursedVault);
+                    Main.getInstance().getHandlerRegistery().getCursedVaultHandler().loadAndSpawnVault(UUID.fromString(nbtApi.getString("vaultUUID")), e.getBlock().getLocation());
                 }
             }
         }

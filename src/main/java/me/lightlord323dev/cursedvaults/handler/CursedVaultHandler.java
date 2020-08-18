@@ -1,8 +1,11 @@
 package me.lightlord323dev.cursedvaults.handler;
 
+import com.google.gson.reflect.TypeToken;
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.util.file.AbstractFile;
+import me.lightlord323dev.cursedvaults.util.file.GsonUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,6 +24,8 @@ public class CursedVaultHandler implements Handler {
 
     private List<CursedVault> cursedVaults;
 
+    private long saveTimer;
+
     private static final List<Material> PROBLEMATIC = Arrays.asList(
             Material.AIR,
             Material.SNOW,
@@ -36,9 +41,13 @@ public class CursedVaultHandler implements Handler {
     @Override
     public void onLoad() {
         cursedVaults = new ArrayList<>();
+        saveTimer = 0;
         Main.getInstance().getExecutorService().scheduleAtFixedRate(() -> {
             cursedVaults.forEach(cursedVault -> {
                 Player player = Bukkit.getPlayer(cursedVault.getOwner());
+
+                if (player == null || !player.isOnline())
+                    return;
 
                 if (!cursedVault.isCanMove()) {
                     if (!cursedVault.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) {
@@ -88,15 +97,25 @@ public class CursedVaultHandler implements Handler {
                         if (cursedVault.getCounter() >= 25)
                             cursedVault.setCounter(0);
                     }
-
                 }
             });
+
+            // AUTO SAVE
+            if (saveTimer >= 30000) {
+                System.out.println("[Cursed Vaults] Attempting to save data...");
+                cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault));
+                Main.getInstance().getHandlerRegistery().getCursedVaultPlayerHandler().onUnload();
+                System.out.println("[Cursed Vaults] Data successfully saved");
+                saveTimer = 0;
+            } else
+                saveTimer++;
+
         }, 0, 10L, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void onUnload() {
-        // TODO save loaded vaults
+//        Main.getInstance().getExecutorService().schedule(() -> cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault)), 0, TimeUnit.MILLISECONDS);
     }
 
     public void registerCursedVault(CursedVault cursedVault) {
@@ -116,6 +135,37 @@ public class CursedVaultHandler implements Handler {
 
     public CursedVault getCursedVault(UUID uuid) {
         return cursedVaults.stream().filter(cursedVault -> cursedVault.getUniqueId().toString().equalsIgnoreCase(uuid.toString())).findAny().orElse(null);
+    }
+
+    public void saveAndUnregisterVault(CursedVault cursedVault) {
+        Main.getInstance().getExecutorService().schedule(() -> {
+            AbstractFile vaultFile = new AbstractFile(Main.getInstance(), cursedVault.getUniqueId().toString() + ".json", "vaultdata", false);
+            GsonUtil.saveObject(cursedVault.serialize(), vaultFile.getFile());
+            unregisterCursedVault(cursedVault);
+        }, 0, TimeUnit.MILLISECONDS);
+    }
+
+    public void loadAndSpawnVault(UUID uuid, Location spawnLocation) {
+        Main.getInstance().getExecutorService().schedule(() -> {
+            AbstractFile vaultFile = new AbstractFile(Main.getInstance(), uuid.toString() + ".json", "vaultdata", false);
+            CursedVault cursedVault = GsonUtil.loadObject(new TypeToken<CursedVault>() {
+            }, vaultFile.getFile());
+            if (cursedVault != null) {
+                cursedVault.load();
+                Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
+                    registerCursedVault(cursedVault);
+                    if (spawnLocation == null)
+                        cursedVault.spawnDisplay(cursedVault.getLastSeenLocation());
+                    else
+                        cursedVault.spawnDisplay(spawnLocation);
+                });
+            }
+        }, 0, TimeUnit.MILLISECONDS);
+    }
+
+    private void saveCursedVaultData(CursedVault cursedVault) {
+        AbstractFile vaultFile = new AbstractFile(Main.getInstance(), cursedVault.getUniqueId().toString() + ".json", "vaultdata", false);
+        GsonUtil.saveObject(cursedVault.serialize(), vaultFile.getFile());
     }
 
     private void teleportToPlayer(Player player, CursedVault cursedVault) {

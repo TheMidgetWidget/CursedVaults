@@ -4,6 +4,7 @@ import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultHandler;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultInteractHandler;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultInventoryHandler;
+import me.lightlord323dev.cursedvaults.handler.CursedVaultPlayerHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 
@@ -20,6 +21,7 @@ public class HandlerRegistery {
 
     // handlers
     private CursedVaultHandler cursedVaultHandler;
+    private CursedVaultPlayerHandler cursedVaultPlayerHandler;
 
     public void loadHanders() {
         handlers = new ArrayList<>();
@@ -27,7 +29,8 @@ public class HandlerRegistery {
         handlers.addAll(Arrays.asList(
                 cursedVaultHandler = new CursedVaultHandler(),
                 new CursedVaultInteractHandler(),
-                new CursedVaultInventoryHandler()
+                new CursedVaultInventoryHandler(),
+                cursedVaultPlayerHandler = new CursedVaultPlayerHandler()
         ));
         // call onLoad method
         handlers.forEach(handler -> {
@@ -44,5 +47,9 @@ public class HandlerRegistery {
 
     public CursedVaultHandler getCursedVaultHandler() {
         return cursedVaultHandler;
+    }
+
+    public CursedVaultPlayerHandler getCursedVaultPlayerHandler() {
+        return cursedVaultPlayerHandler;
     }
 }
