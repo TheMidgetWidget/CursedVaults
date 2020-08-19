@@ -68,11 +68,8 @@ public class Main extends JavaPlugin {
         // USER DATA
         this.userData = new AbstractFile(this, "userdata.json", false);
         // SKIN DATA
+        saveResource("skindata.yml", false);
         this.skinData = new AbstractFile(this, "skindata.yml", true);
-        if (this.skinData.getConfig().getConfigurationSection("skins") == null) {
-            this.skinData.getConfig().set("skins", Arrays.asList("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTczNzY3Y2QzMmU2N2UwM2NkNzg0ODhjMDExZTQwYTEwNDg3Y2IwYjdmNTcyMWEyYjgxMDFlMmQxN2FhNTNkZCJ9fX0="));
-            this.skinData.save();
-        }
         // SETTINGS DATA
         saveResource("settings.yml", false);
         this.settingsData = new SettingsData(this);
