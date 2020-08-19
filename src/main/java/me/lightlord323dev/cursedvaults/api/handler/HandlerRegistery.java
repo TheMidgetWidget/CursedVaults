@@ -1,6 +1,7 @@
 package me.lightlord323dev.cursedvaults.api.handler;
 
 import me.lightlord323dev.cursedvaults.Main;
+import me.lightlord323dev.cursedvaults.api.cursedvault.skin.SkinHandler;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultHandler;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultInteractHandler;
 import me.lightlord323dev.cursedvaults.handler.CursedVaultInventoryHandler;
@@ -22,6 +23,7 @@ public class HandlerRegistery {
     // handlers
     private CursedVaultHandler cursedVaultHandler;
     private CursedVaultPlayerHandler cursedVaultPlayerHandler;
+    private SkinHandler skinHandler;
 
     public void loadHanders() {
         handlers = new ArrayList<>();
@@ -30,7 +32,8 @@ public class HandlerRegistery {
                 cursedVaultHandler = new CursedVaultHandler(),
                 new CursedVaultInteractHandler(),
                 new CursedVaultInventoryHandler(),
-                cursedVaultPlayerHandler = new CursedVaultPlayerHandler()
+                cursedVaultPlayerHandler = new CursedVaultPlayerHandler(),
+                skinHandler = new SkinHandler()
         ));
         // call onLoad method
         handlers.forEach(handler -> {
@@ -51,5 +54,9 @@ public class HandlerRegistery {
 
     public CursedVaultPlayerHandler getCursedVaultPlayerHandler() {
         return cursedVaultPlayerHandler;
+    }
+
+    public SkinHandler getSkinHandler() {
+        return skinHandler;
     }
 }

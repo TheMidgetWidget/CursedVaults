@@ -103,7 +103,7 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                                     new OptionItem(Material.CHEST, ChatColor.GREEN + "Pickup vault", ChatColor.GRAY + "Click to pickup your vault", 20, "vaultPickup"),
                                     new OptionItem(Material.BARRIER, ChatColor.BLUE + "Toggle vault auto-pickup", ChatColor.GRAY + autoPickupLore, 22, "vaultToggle"),
                                     new OptionItem(Material.CAULDRON_ITEM, ChatColor.RED + "Halt", haltLore, 24, "vaultHalt"),
-                                    new OptionItem(Material.CAULDRON_ITEM, ChatColor.DARK_PURPLE + "Filter mode", ChatColor.GRAY + "Current filter mode: " + ChatColor.GOLD + cursedVault.getFilterMode().toString(), 28, "vaultFilter")
+                                    new OptionItem(Material.PAPER, ChatColor.DARK_PURPLE + "Filter mode", ChatColor.GRAY + "Current filter mode: " + ChatColor.GOLD + cursedVault.getFilterMode().toString(), 30, "vaultFilter")
                             )).getInventory();
                             e.getWhoClicked().openInventory(inventory);
                             break;

@@ -25,6 +25,8 @@ public class CursedVault {
 
     private UUID uniqueId, owner;
     private String displayName;
+    private transient ItemStack skin;
+    private String serializedSkin;
     private int size, pickupRadius;
     private float speed;
     private transient List<ItemStack> items;
@@ -40,6 +42,7 @@ public class CursedVault {
         this.uniqueId = UUID.randomUUID();
         this.owner = owner;
         this.displayName = Bukkit.getPlayer(owner).getName() + "'s Cursed Vault";
+        this.skin = new ItemStack(Material.CHEST);
         this.size = size;
         this.pickupRadius = pickupRadius;
         this.speed = speed;
@@ -56,18 +59,22 @@ public class CursedVault {
     public CursedVault serialize() {
         this.serializedItems = new ArrayList<>();
         this.items.forEach(itemStack -> serializedItems.add(ItemSerializer.itemStackToBase64(itemStack)));
+        this.serializedSkin = ItemSerializer.itemStackToBase64(this.skin);
         return this;
     }
 
     public void load() {
         this.items = new ArrayList<>();
         this.serializedItems.forEach(item -> items.add(ItemSerializer.itemStackFromBase64(item)));
+        this.skin = ItemSerializer.itemStackFromBase64(this.serializedSkin);
+        this.serializedItems = null;
+        this.serializedSkin = null;
     }
 
     public void tryToPickup() {
         if (!canPickUp)
             return;
-        display.getLocation().getWorld().getNearbyEntities(display.getLocation(), pickupRadius, pickupRadius, pickupRadius).stream().filter(entity -> entity instanceof Item).forEach(item -> {
+        display.getLocation().getWorld().getNearbyEntities(display.getLocation().clone().add(0, 1, 0), pickupRadius, pickupRadius, pickupRadius).stream().filter(entity -> entity instanceof Item).forEach(item -> {
             ItemStack itemToPickup = ((Item) item).getItemStack();
             if (!canPickupItem(itemToPickup))
                 return;
@@ -95,6 +102,10 @@ public class CursedVault {
         });
     }
 
+    public void updateSkin() {
+        this.display.setHelmet(this.skin);
+    }
+
     private boolean canPickupItem(ItemStack itemStack) {
         switch (this.filterMode) {
             case NONE:
@@ -112,7 +123,7 @@ public class CursedVault {
         display = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
         display.setCustomName(ChatColor.translateAlternateColorCodes('&', this.displayName));
         display.setCustomNameVisible(true);
-        display.getEquipment().setHelmet(new ItemStack(Material.CHEST));
+        display.getEquipment().setHelmet(this.skin);
         display.setVisible(false);
         display.setCanPickupItems(false);
         display.setGravity(false);
@@ -242,5 +253,13 @@ public class CursedVault {
 
     public void setFilterMode(FilterMode filterMode) {
         this.filterMode = filterMode;
+    }
+
+    public ItemStack getSkin() {
+        return skin;
+    }
+
+    public void setSkin(ItemStack skin) {
+        this.skin = skin;
     }
 }

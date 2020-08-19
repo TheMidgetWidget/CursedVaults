@@ -2,9 +2,11 @@ package me.lightlord323dev.cursedvaults.handler;
 
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
+import me.lightlord323dev.cursedvaults.api.cursedvault.skin.SkinUtils;
 import me.lightlord323dev.cursedvaults.api.gui.itemmenu.GUIItemMenu;
 import me.lightlord323dev.cursedvaults.api.gui.optionmenu.OptionItem;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.util.MessageUtil;
 import me.lightlord323dev.cursedvaults.util.NBTApi;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -50,6 +52,16 @@ public class CursedVaultInteractHandler implements Handler, Listener {
             UUID owner = UUID.fromString(e.getRightClicked().getMetadata("cursedVault").get(0).asString());
             if (owner.toString().equalsIgnoreCase(e.getPlayer().getUniqueId().toString())) {
                 CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(Bukkit.getPlayer(owner));
+                if (e.getPlayer().isSneaking()) {
+                    if (e.getPlayer().getItemInHand() == null || !SkinUtils.isValidSkin(e.getPlayer().getItemInHand())) {
+                        MessageUtil.error(e.getPlayer(), "You are not holding a valid skin.");
+                        return;
+                    }
+                    cursedVault.setSkin(e.getPlayer().getItemInHand());
+                    cursedVault.updateSkin();
+                    MessageUtil.success(e.getPlayer(), "Skin has been applied to your vault.");
+                    return;
+                }
                 e.getPlayer().setMetadata("cvInv", new FixedMetadataValue(Main.getInstance(), 1));
                 Inventory inventory = new GUIItemMenu(cursedVault.getUniqueId(), ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName()), 54, cursedVault.getSize(), 1, cursedVault.getItems()).getInventory();
                 inventory.setItem(4, new OptionItem(Material.CHEST, ChatColor.GOLD + "Options", ChatColor.GRAY + "Click to view vault options", 0, "menu").getItemStack());

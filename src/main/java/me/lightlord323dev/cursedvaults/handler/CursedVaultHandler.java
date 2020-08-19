@@ -4,7 +4,9 @@ import com.google.gson.reflect.TypeToken;
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.cursedvault.CursedVault;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.api.user.CursedVaultUser;
 import me.lightlord323dev.cursedvaults.util.ItemBuilder;
+import me.lightlord323dev.cursedvaults.util.LocationUtils;
 import me.lightlord323dev.cursedvaults.util.NBTApi;
 import me.lightlord323dev.cursedvaults.util.file.AbstractFile;
 import me.lightlord323dev.cursedvaults.util.file.GsonUtil;
@@ -119,7 +121,19 @@ public class CursedVaultHandler implements Handler {
 
     @Override
     public void onUnload() {
-//        Main.getInstance().getExecutorService().schedule(() -> cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault)), 0, TimeUnit.MILLISECONDS);
+        Main.getInstance().getExecutorService().schedule(() -> {
+            cursedVaults.forEach(cursedVault -> {
+                cursedVault.setLastSeenLocation(LocationUtils.serializeLocation(cursedVault.getLocation()));
+                saveCursedVaultData(cursedVault);
+            });
+        }, 0, TimeUnit.MILLISECONDS);
+        this.cursedVaults.forEach(cursedVault -> cursedVault.getDisplay().remove());
+    }
+
+    public List<CursedVaultUser> getUserData() {
+        List<CursedVaultUser> users = new ArrayList<>();
+        this.cursedVaults.forEach(cursedVault -> users.add(new CursedVaultUser(cursedVault.getOwner(), cursedVault.getUniqueId())));
+        return users;
     }
 
     public void registerCursedVault(CursedVault cursedVault) {

@@ -7,6 +7,7 @@ import me.lightlord323dev.cursedvaults.api.handler.Handler;
 import me.lightlord323dev.cursedvaults.api.user.CursedVaultUser;
 import me.lightlord323dev.cursedvaults.util.LocationUtils;
 import me.lightlord323dev.cursedvaults.util.file.GsonUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -49,10 +50,18 @@ public class CursedVaultPlayerHandler implements Handler, Listener {
         }, Main.getInstance().getUserData().getFile());
         if (users == null)
             users = new ArrayList<>();
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            CursedVaultUser user = getUser(player.getUniqueId());
+            if (user != null) {
+                Main.getInstance().getHandlerRegistery().getCursedVaultHandler().loadAndSpawnVault(user.getVault(), null);
+                users.remove(user);
+            }
+        });
     }
 
     @Override
     public void onUnload() {
+        this.users.addAll(Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getUserData());
         GsonUtil.saveObject(users, Main.getInstance().getUserData().getFile());
     }
 
