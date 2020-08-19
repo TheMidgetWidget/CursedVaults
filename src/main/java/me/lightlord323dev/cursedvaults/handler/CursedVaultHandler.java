@@ -122,13 +122,11 @@ public class CursedVaultHandler implements Handler {
 
     @Override
     public void onUnload() {
-        Main.getInstance().getExecutorService().schedule(() -> {
-            cursedVaults.forEach(cursedVault -> {
-                cursedVault.setLastSeenLocation(LocationUtils.serializeLocation(cursedVault.getLocation()));
-                saveCursedVaultData(cursedVault);
-            });
-        }, 0, TimeUnit.MILLISECONDS);
-        this.cursedVaults.forEach(cursedVault -> cursedVault.getDisplay().remove());
+        cursedVaults.forEach(cursedVault -> {
+            cursedVault.setLastSeenLocation(LocationUtils.serializeLocation(cursedVault.getLocation()));
+            saveCursedVaultData(cursedVault);
+            cursedVault.getDisplay().remove();
+        });
     }
 
     public List<CursedVaultUser> getUserData() {
