@@ -8,6 +8,7 @@ import me.lightlord323dev.cursedvaults.api.gui.optionmenu.GUIOptionMenu;
 import me.lightlord323dev.cursedvaults.api.gui.optionmenu.OptionItem;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
 import me.lightlord323dev.cursedvaults.util.ItemBuilder;
+import me.lightlord323dev.cursedvaults.util.MessageUtil;
 import me.lightlord323dev.cursedvaults.util.NBTApi;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.ChatColor;
@@ -57,11 +58,7 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                     CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(((Player) e.getWhoClicked()));
                     switch (nbtApi.getString("cvOption")) {
                         case "menu": {
-                            Inventory inventory = new GUIOptionMenu(ChatColor.BLUE + "Vault options", 54, Arrays.asList(
-                                    new OptionItem(Material.NAME_TAG, ChatColor.GREEN + "Change vault name", ChatColor.GRAY + "Click to change the name which appears above your vault", 20, "nameChange"),
-                                    new OptionItem(Material.SAPLING, ChatColor.BLUE + "View upgrades", ChatColor.GRAY + "Click to view available upgrades for your vault", 22, "vaultUpgrade"),
-                                    new OptionItem(Material.NETHER_STAR, ChatColor.RED + "Vault settings", ChatColor.GRAY + "Click to modify your vault's settings", 24, "vaultSettings")
-                            )).getInventory();
+                            Inventory inventory = new GUIOptionMenu(ChatColor.BLUE + "Vault options", 54, Main.getInstance().getIconData().getMainIcons()).getInventory();
                             e.getWhoClicked().openInventory(inventory);
                             break;
                         }
@@ -80,9 +77,9 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                             break;
                         case "vaultUpgrade":
                             Inventory upgradesInv = new GUIOptionMenu(ChatColor.BLUE + "Vault upgrades", 54, Arrays.asList(
-                                    new OptionItem(Material.STONE, 20, "cvSizeUp", ChatColor.GREEN + "Add storage slot", ChatColor.GRAY + "Click to add a storage slot to your vault", " ", ChatColor.GRAY + "Current size: " + ChatColor.GOLD + cursedVault.getSize(), " ", " "),
-                                    new OptionItem(Material.FEATHER, 22, "cvSpeedUp", ChatColor.BLUE + "Speed upgrade", ChatColor.GRAY + "Click to increase your vault's speed", " ", ChatColor.GRAY + "Current speed: " + ChatColor.GOLD + cursedVault.getSpeed() + ChatColor.GRAY + " (Max speed = 5)", " ", " "),
-                                    new OptionItem(Material.COMPASS, 24, "cvRadiusUp", ChatColor.RED + "Pickup radius", ChatColor.GRAY + "Click to increase your vault's pickup radius", " ", ChatColor.GRAY + "Current radius: " + ChatColor.GOLD + cursedVault.getPickupRadius() + ChatColor.GRAY + " (Max radius = 4)", " ", " ")
+                                    new OptionItem(Material.STONE, 20, "cvSizeUp", ChatColor.GREEN + "Add storage slot", ChatColor.GRAY + "Click to add a storage slot to your vault", " ", ChatColor.GRAY + "Current size: " + ChatColor.GOLD + cursedVault.getSize(), " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getStoragePrice(), " ", " "),
+                                    new OptionItem(Material.FEATHER, 22, "cvSpeedUp", ChatColor.BLUE + "Speed upgrade", ChatColor.GRAY + "Click to increase your vault's speed", " ", ChatColor.GRAY + "Current speed: " + ChatColor.GOLD + cursedVault.getSpeed() + ChatColor.GRAY + " (Max speed = " + Main.getInstance().getSettingsData().getMaxSpeed() + ")", " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getSpeedPrice(), " ", " "),
+                                    new OptionItem(Material.COMPASS, 24, "cvRadiusUp", ChatColor.RED + "Pickup radius", ChatColor.GRAY + "Click to increase your vault's pickup radius", " ", ChatColor.GRAY + "Current radius: " + ChatColor.GOLD + cursedVault.getPickupRadius() + ChatColor.GRAY + " (Max radius = " + Main.getInstance().getSettingsData().getMaxRadius() + ")", " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getRadiusPrice(), " ", " ")
                             )).getInventory();
                             e.getWhoClicked().openInventory(upgradesInv);
                             break;
@@ -110,12 +107,11 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                         }
                         // SETTINGS MENU
                         case "vaultPickup":
-                            // TODO SAVE VAULT CONTENTS ON DISK
                             if (e.getWhoClicked().getInventory().firstEmpty() == -1) {
                                 e.getWhoClicked().sendMessage(ChatColor.RED + "Your Inventory is full.");
                                 e.getWhoClicked().closeInventory();
                             } else {
-                                ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
+                                ItemStack vaultItem = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().createVaultItem(cursedVault);
                                 e.getWhoClicked().closeInventory();
                                 e.getWhoClicked().getInventory().addItem(vaultItem);
                                 Main.getInstance().getHandlerRegistery().getCursedVaultHandler().saveAndUnregisterVault(cursedVault);
@@ -155,19 +151,39 @@ public class CursedVaultInventoryHandler implements Handler, Listener {
                             break;
                         // UPGRADES MENU
                         case "cvSizeUp":
-                            cursedVault.setSize(cursedVault.getSize() + 1);
-                            e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to add a storage slot to your vault", " ", ChatColor.GRAY + "Current size: " + ChatColor.GOLD + cursedVault.getSize(), " ", " ").build());
+                            if (Main.getInstance().getEconomy().getBalance(((Player) e.getWhoClicked())) < Main.getInstance().getSettingsData().getStoragePrice()) {
+                                e.getWhoClicked().closeInventory();
+                                MessageUtil.error(e.getWhoClicked(), "You don't have enough money.");
+                                return;
+                            }
+                            if (cursedVault.getSpeed() < Main.getInstance().getSettingsData().getMaxStorage()) {
+                                Main.getInstance().getEconomy().withdrawPlayer(((Player) e.getWhoClicked()), Main.getInstance().getSettingsData().getStoragePrice());
+                                cursedVault.setSize(cursedVault.getSize() + 1);
+                                e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to add a storage slot to your vault", " ", ChatColor.GRAY + "Current size: " + ChatColor.GOLD + cursedVault.getSize(), " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getStoragePrice(), " ", " ").build());
+                            }
                             break;
                         case "cvSpeedUp":
-                            if (cursedVault.getSpeed() < 5) {
+                            if (Main.getInstance().getEconomy().getBalance(((Player) e.getWhoClicked())) < Main.getInstance().getSettingsData().getSpeedPrice()) {
+                                e.getWhoClicked().closeInventory();
+                                MessageUtil.error(e.getWhoClicked(), "You don't have enough money.");
+                                return;
+                            }
+                            if (cursedVault.getSpeed() < Main.getInstance().getSettingsData().getMaxSpeed()) {
+                                Main.getInstance().getEconomy().withdrawPlayer(((Player) e.getWhoClicked()), Main.getInstance().getSettingsData().getSpeedPrice());
                                 cursedVault.setSpeed(cursedVault.getSpeed() + 1);
-                                e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to increase your vault's speed", " ", ChatColor.GRAY + "Current speed: " + ChatColor.GOLD + cursedVault.getSpeed() + ChatColor.GRAY + " (Max speed = 5)", " ", " ").build());
+                                e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to increase your vault's speed", " ", ChatColor.GRAY + "Current speed: " + ChatColor.GOLD + cursedVault.getSpeed() + ChatColor.GRAY + " (Max speed = " + Main.getInstance().getSettingsData().getMaxSpeed() + ")", " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getSpeedPrice(), " ", " ").build());
                             }
                             break;
                         case "cvRadiusUp":
-                            if (cursedVault.getPickupRadius() < 4) {
+                            if (Main.getInstance().getEconomy().getBalance(((Player) e.getWhoClicked())) < Main.getInstance().getSettingsData().getRadiusPrice()) {
+                                e.getWhoClicked().closeInventory();
+                                MessageUtil.error(e.getWhoClicked(), "You don't have enough money.");
+                                return;
+                            }
+                            if (cursedVault.getPickupRadius() < Main.getInstance().getSettingsData().getMaxRadius()) {
+                                Main.getInstance().getEconomy().withdrawPlayer(((Player) e.getWhoClicked()), Main.getInstance().getSettingsData().getRadiusPrice());
                                 cursedVault.setPickupRadius(cursedVault.getPickupRadius() + 1);
-                                e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to increase your vault's pickup radius", " ", ChatColor.GRAY + "Current radius: " + ChatColor.GOLD + cursedVault.getPickupRadius() + ChatColor.GRAY + " (Max radius = 4)", " ", " ").build());
+                                e.setCurrentItem(new ItemBuilder(e.getCurrentItem()).setLore(ChatColor.GRAY + "Click to increase your vault's pickup radius", " ", ChatColor.GRAY + "Current radius: " + ChatColor.GOLD + cursedVault.getPickupRadius() + ChatColor.GRAY + " (Max radius = " + Main.getInstance().getSettingsData().getMaxRadius() + ")", " ", ChatColor.GRAY + "Price: " + ChatColor.GOLD + Main.getInstance().getSettingsData().getRadiusPrice(), " ", " ").build());
                             }
                             break;
                     }

@@ -41,6 +41,29 @@ public class CommandCursedVault implements CommandExecutor {
                     }
                     return true;
                 }
+                if (args[0].equalsIgnoreCase("forcepickup")) {
+                    Player target = Bukkit.getPlayer(args[1]);
+                    if (target == null || !target.isOnline()) {
+                        MessageUtil.error(sender, "Player not found.");
+                        return true;
+                    }
+
+                    CursedVault cursedVault = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().getCursedVault(target);
+                    if (cursedVault == null) {
+                        MessageUtil.error(sender, "This player does not have active vaults.");
+                        return true;
+                    }
+                    ItemStack vaultItem = Main.getInstance().getHandlerRegistery().getCursedVaultHandler().createVaultItem(cursedVault);
+                    if (target.getInventory().firstEmpty() == -1) {
+                        MessageUtil.error(target, "Your inventory is full, dropping vault on the ground.");
+                        target.getWorld().dropItemNaturally(target.getLocation(), vaultItem);
+                    } else {
+                        target.getInventory().addItem(vaultItem);
+                    }
+                    Main.getInstance().getHandlerRegistery().getCursedVaultHandler().saveAndUnregisterVault(cursedVault);
+                    MessageUtil.success(sender, "Vault forcefully picked up.");
+                    MessageUtil.success(target, "Your vault has been forcefully picked up.");
+                }
             }
             if (args.length == 3) {
                 if (args[0].equalsIgnoreCase("giveskin")) {

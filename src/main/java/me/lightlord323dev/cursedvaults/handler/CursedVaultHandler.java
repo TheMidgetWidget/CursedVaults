@@ -30,7 +30,7 @@ public class CursedVaultHandler implements Handler {
 
     private List<CursedVault> cursedVaults;
 
-    private long saveTimer;
+    private long saveTimer, savePeriod;
 
     private static final List<Material> PROBLEMATIC = Arrays.asList(
             Material.AIR,
@@ -48,6 +48,7 @@ public class CursedVaultHandler implements Handler {
     public void onLoad() {
         cursedVaults = new ArrayList<>();
         saveTimer = 0;
+        savePeriod = Main.getInstance().getSettingsData().getAutosavePeriod() * 60 * 100;
         Main.getInstance().getExecutorService().scheduleAtFixedRate(() -> {
             cursedVaults.forEach(cursedVault -> {
                 Player player = Bukkit.getPlayer(cursedVault.getOwner());
@@ -107,7 +108,7 @@ public class CursedVaultHandler implements Handler {
             });
 
             // AUTO SAVE
-            if (saveTimer >= 30000) {
+            if (saveTimer >= savePeriod) {
                 System.out.println("[Cursed Vaults] Attempting to save data...");
                 cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault));
                 Main.getInstance().getHandlerRegistery().getCursedVaultPlayerHandler().onUnload();
@@ -116,7 +117,7 @@ public class CursedVaultHandler implements Handler {
             } else
                 saveTimer++;
 
-        }, 0, 10L, TimeUnit.MILLISECONDS);
+        }, 1000, 10L, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -157,8 +158,13 @@ public class CursedVaultHandler implements Handler {
 
     public ItemStack createVaultItem(Player owner) {
         CursedVault cursedVault = new CursedVault(owner.getUniqueId(), 7, 1, 1f);
-        ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
+        ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault", " ", ChatColor.GRAY + "Shift right click on your vault to change its skin", " ", " ").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
         Main.getInstance().getExecutorService().schedule(() -> saveCursedVaultData(cursedVault), 0, TimeUnit.MILLISECONDS);
+        return vaultItem;
+    }
+
+    public ItemStack createVaultItem(CursedVault cursedVault) {
+        ItemStack vaultItem = new NBTApi(new ItemBuilder(Material.CHEST).setDisplayName(ChatColor.translateAlternateColorCodes('&', cursedVault.getDisplayName())).setLore(ChatColor.GRAY + "Place to spawn this vault", " ", ChatColor.GRAY + "Shift right click on your vault to change its skin", " ", " ").build()).setString("vaultUUID", cursedVault.getUniqueId().toString()).getItemStack();
         return vaultItem;
     }
 
@@ -183,7 +189,7 @@ public class CursedVaultHandler implements Handler {
                         cursedVault.spawnDisplay(cursedVault.getLastSeenLocation());
                     else
                         cursedVault.spawnDisplay(spawnLocation);
-                });
+                }, 2);
             }
         }, 0, TimeUnit.MILLISECONDS);
     }

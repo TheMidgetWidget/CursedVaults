@@ -1,0 +1,15 @@
+name-change:
+  material: "NAME_TAG"
+  name: "&aChange vault name"
+  lore: "&7Click to change the name which appears above your vault"
+  slot: 20
+vault-upgrade:
+  material: "SAPLING"
+  name: "&9View upgrades"
+  lore: "&7Click to view available upgrades for your vault"
+  slot: 22
+vault-settings:
+  material: "NETHER_STAR"
+  name: "&4Vault settings"
+  lore: "&7Click to modify your vault's settings"
+  slot: 24

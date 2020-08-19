@@ -2,6 +2,8 @@ package me.lightlord323dev.cursedvaults.api.cursedvault.skin;
 
 import me.lightlord323dev.cursedvaults.Main;
 import me.lightlord323dev.cursedvaults.api.handler.Handler;
+import me.lightlord323dev.cursedvaults.util.NBTApi;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -17,7 +19,17 @@ public class SkinHandler implements Handler {
     @Override
     public void onLoad() {
         this.skins = new ArrayList<>();
-        Main.getInstance().getSkinData().getConfig().getStringList("skins").forEach(str -> skins.add(SkinUtils.getCustomTextureHead(str)));
+        Main.getInstance().getSkinData().getConfig().getStringList("skins").forEach(str -> {
+            Material type = Material.getMaterial(str);
+            ItemStack skin;
+            if (type == null) {
+                skin = SkinUtils.getCustomTextureHead(str);
+            } else {
+                skin = new ItemStack(type);
+            }
+            skin = new NBTApi(skin).setBoolean("cvSkinItem", true).getItemStack();
+            this.skins.add(skin);
+        });
         System.out.println("[Cursed Vaults] Skin data has been cached");
     }
 

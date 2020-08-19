@@ -2,6 +2,7 @@ package me.lightlord323dev.cursedvaults.api.cursedvault.skin;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import me.lightlord323dev.cursedvaults.util.NBTApi;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -19,7 +20,7 @@ public class SkinUtils {
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         GameProfile profile = new GameProfile(UUID.randomUUID(), "");
         profile.getProperties().put("textures", new Property("textures", value));
-        Field profileField = null;
+        Field profileField;
 
 
         try {
@@ -39,7 +40,7 @@ public class SkinUtils {
     }
 
     public static boolean isValidSkin(ItemStack itemStack) {
-        return itemStack.getType().isBlock() || itemStack.getType() == Material.SKULL_ITEM;
+        return new NBTApi(itemStack).hasKey("cvSkinItem");
     }
 
 }

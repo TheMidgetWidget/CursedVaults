@@ -1,0 +1,10 @@
+settings:
+  auto-save-period: 5
+upgrade-prices:
+  storage-increase-price: 200
+  speed-increase-price: 200
+  radius-increase-price: 200
+upgrade-settings:
+  max-storage-upgrade: 56
+  max-radius-upgrade: 4
+  max-speed-upgrade: 5
