@@ -50,72 +50,76 @@ public class CursedVaultHandler implements Handler {
         saveTimer = 0;
         savePeriod = Main.getInstance().getSettingsData().getAutosavePeriod() * 60 * 100;
         Main.getInstance().getExecutorService().scheduleAtFixedRate(() -> {
-            cursedVaults.forEach(cursedVault -> {
-                Player player = Bukkit.getPlayer(cursedVault.getOwner());
+            try {
+                cursedVaults.forEach(cursedVault -> {
+                    Player player = Bukkit.getPlayer(cursedVault.getOwner());
 
-                if (player == null || !player.isOnline())
-                    return;
+                    if (player == null || !player.isOnline() || cursedVault.getDisplay() == null)
+                        return;
 
-                if (!cursedVault.isCanMove()) {
+                    if (!cursedVault.isCanMove()) {
+                        if (!cursedVault.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) {
+                            teleportToPlayer(player, cursedVault);
+                            cursedVault.setCanMove(true);
+                        }
+                        return;
+                    }
+
                     if (!cursedVault.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) {
                         teleportToPlayer(player, cursedVault);
-                        cursedVault.setCanMove(true);
-                    }
-                    return;
-                }
-
-                if (!cursedVault.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) {
-                    teleportToPlayer(player, cursedVault);
-                } else if (cursedVault.getDisplay().getLocation().distanceSquared(player.getLocation()) >= 1000) {
-                    teleportToPlayer(player, cursedVault);
-                } else {
-                    Location playerLoc = player.getLocation().clone(), targetLoc;
-                    if (cursedVault.getDisplay().getLocation().getBlockX() == playerLoc.getBlockX() && cursedVault.getDisplay().getLocation().getBlockZ() == playerLoc.getBlockZ()) {
-                        return;
+                    } else if (cursedVault.getDisplay().getLocation().distanceSquared(player.getLocation()) >= 1000) {
+                        teleportToPlayer(player, cursedVault);
                     } else {
-                        targetLoc = cursedVault.getDisplay().getLocation().clone().add(playerLoc.toVector().subtract(cursedVault.getDisplay().getLocation().toVector()).normalize().multiply(0.1 + (cursedVault.getSpeed()) * 0.05));
-                        if (targetLoc.distanceSquared(playerLoc) <= 4)
+                        Location playerLoc = player.getLocation().clone(), targetLoc;
+                        if (cursedVault.getDisplay().getLocation().getBlockX() == playerLoc.getBlockX() && cursedVault.getDisplay().getLocation().getBlockZ() == playerLoc.getBlockZ()) {
                             return;
-                    }
+                        } else {
+                            targetLoc = cursedVault.getDisplay().getLocation().clone().add(playerLoc.toVector().subtract(cursedVault.getDisplay().getLocation().toVector()).normalize().multiply(0.1 + (cursedVault.getSpeed()) * 0.05));
+                            if (targetLoc.distanceSquared(playerLoc) <= 4)
+                                return;
+                        }
 
-                    // making vault look in the same dir
-                    targetLoc.setDirection(playerLoc.subtract(targetLoc).toVector());
+                        // making vault look in the same dir
+                        targetLoc.setDirection(playerLoc.subtract(targetLoc).toVector());
 
-                    Location targetClone = targetLoc.clone();
+                        Location targetClone = targetLoc.clone();
 
-                    for (int i = -2; i < 2; i++) {
-                        if (isValidBottomBlock(targetClone.clone().add(0, i, 0)) && isValidTopBlock(targetClone.clone().add(0, i + 1, 0))) {
-                            targetLoc = targetClone.clone().add(0, i, 0);
+                        for (int i = -2; i < 2; i++) {
+                            if (isValidBottomBlock(targetClone.clone().add(0, i, 0)) && isValidTopBlock(targetClone.clone().add(0, i + 1, 0))) {
+                                targetLoc = targetClone.clone().add(0, i, 0);
+                            }
+                        }
+
+                        if (targetLoc.getBlock().getType() != Material.AIR) {
+                            targetLoc.setY(targetLoc.getBlockY());
+                            Location tempLoc = targetLoc;
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
+                                cursedVault.getDisplay().teleport(tempLoc);
+                            });
+                        }
+                        if (cursedVault.getCounter() == 0) {
+                            cursedVault.tryToPickup();
+                            cursedVault.setCounter(cursedVault.getCounter() + 1);
+                        } else if (cursedVault.getCounter() > 0) {
+                            cursedVault.setCounter(cursedVault.getCounter() + 1);
+                            if (cursedVault.getCounter() >= 25)
+                                cursedVault.setCounter(0);
                         }
                     }
+                });
 
-                    if (targetLoc.getBlock().getType() != Material.AIR) {
-                        targetLoc.setY(targetLoc.getBlockY());
-                        Location tempLoc = targetLoc;
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(Main.getInstance(), () -> {
-                            cursedVault.getDisplay().teleport(tempLoc);
-                        });
-                    }
-                    if (cursedVault.getCounter() == 0) {
-                        cursedVault.tryToPickup();
-                        cursedVault.setCounter(cursedVault.getCounter() + 1);
-                    } else if (cursedVault.getCounter() > 0) {
-                        cursedVault.setCounter(cursedVault.getCounter() + 1);
-                        if (cursedVault.getCounter() >= 25)
-                            cursedVault.setCounter(0);
-                    }
-                }
-            });
-
-            // AUTO SAVE
-            if (saveTimer >= savePeriod) {
-                System.out.println("[Cursed Vaults] Attempting to save data...");
-                cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault));
-                Main.getInstance().getHandlerRegistery().getCursedVaultPlayerHandler().onUnload();
-                System.out.println("[Cursed Vaults] Data successfully saved");
-                saveTimer = 0;
-            } else
-                saveTimer++;
+                // AUTO SAVE
+                if (saveTimer >= savePeriod) {
+                    System.out.println("[Cursed Vaults] Attempting to save data...");
+                    cursedVaults.forEach(cursedVault -> saveCursedVaultData(cursedVault));
+                    Main.getInstance().getHandlerRegistery().getCursedVaultPlayerHandler().onUnload();
+                    System.out.println("[Cursed Vaults] Data successfully saved");
+                    saveTimer = 0;
+                } else
+                    saveTimer++;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         }, 1000, 10L, TimeUnit.MILLISECONDS);
     }
